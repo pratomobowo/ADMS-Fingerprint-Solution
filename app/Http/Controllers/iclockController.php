@@ -85,16 +85,48 @@ public function handshake(Request $request)
                     // $data = preg_split('/\s+/', trim($rey));
                     $data = explode("\t",$rey);
                     //dd($data);
+                    
+                    // Handle both BWN and SPK device formats
+                    // BWN: employee_id, timestamp, status1, status2, status3, status4, status5 (7 fields)
+                    // SPK: employee_id, timestamp, status1, status2, status3, status4, status5, status6, status7, status8, status9 (10 fields)
+                    
                     $q['sn'] = $request->input('SN');
                     $q['table'] = $request->input('table');
                     $q['stamp'] = $request->input('Stamp');
                     $q['employee_id'] = $data[0];
                     $q['timestamp'] = $data[1];
-                    $q['status1'] = $this->validateAndFormatInteger($data[2] ?? null);
-                    $q['status2'] = $this->validateAndFormatInteger($data[3] ?? null);
-                    $q['status3'] = $this->validateAndFormatInteger($data[4] ?? null);
-                    $q['status4'] = $this->validateAndFormatInteger($data[5] ?? null);
-                    $q['status5'] = $this->validateAndFormatInteger($data[6] ?? null);
+                    
+                    // Check if this is SPK device (has more than 7 fields)
+                    if (count($data) > 7) {
+                        // For SPK devices, skip status1 (data[2]) and start from status2 (data[3])
+                        $q['status1'] = $this->validateAndFormatInteger($data[3] ?? null);
+                        $q['status2'] = $this->validateAndFormatInteger($data[4] ?? null);
+                        $q['status3'] = $this->validateAndFormatInteger($data[5] ?? null);
+                        $q['status4'] = $this->validateAndFormatInteger($data[6] ?? null);
+                        $q['status5'] = $this->validateAndFormatInteger($data[7] ?? null);
+                        
+                        \Log::info('SPK device detected - skipping status1 field', [
+                            'sn' => $request->input('SN'),
+                            'skipped_status1' => $data[2] ?? null,
+                            'additional_fields' => array_slice($data, 8)
+                        ]);
+                    } else {
+                        // For BWN devices, use normal mapping
+                        $q['status1'] = $this->validateAndFormatInteger($data[2] ?? null);
+                        $q['status2'] = $this->validateAndFormatInteger($data[3] ?? null);
+                        $q['status3'] = $this->validateAndFormatInteger($data[4] ?? null);
+                        $q['status4'] = $this->validateAndFormatInteger($data[5] ?? null);
+                        $q['status5'] = $this->validateAndFormatInteger($data[6] ?? null);
+                    }
+                    
+                    // Log additional status fields for SPK devices (for debugging/monitoring)
+                    if (count($data) > 7) {
+                        \Log::info('SPK device detected with additional status fields', [
+                            'sn' => $request->input('SN'),
+                            'additional_fields' => array_slice($data, 7)
+                        ]);
+                    }
+                    
                     $q['created_at'] = now();
                     $q['updated_at'] = now();
                     //dd($q);
