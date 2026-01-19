@@ -69,6 +69,10 @@
                     <td>{{ $user->email }}</td>
                     <td class="text-secondary small">{{ \Carbon\Carbon::parse($user->created_at)->format('M d, Y H:i') }}</td>
                     <td class="text-end">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editUserModal{{ $user->id }}" title="Edit User">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+
                         <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#resetPasswordModal{{ $user->id }}" title="Reset Password">
                             <i class="bi bi-shield-lock"></i>
                         </button>
@@ -84,6 +88,36 @@
                         @endif
                     </td>
                 </tr>
+
+                <!-- Edit User Modal -->
+                <div class="modal fade" id="editUserModal{{ $user->id }}" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form action="{{ route('admin.users.update', $user->id) }}" method="POST">
+                                @csrf
+                                @method('PATCH')
+                                <div class="modal-header">
+                                    <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Edit User: {{ $user->name }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">Full Name</label>
+                                        <input type="text" name="name" class="form-control" value="{{ $user->name }}" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold">Email Address</label>
+                                        <input type="email" name="email" class="form-control" value="{{ $user->email }}" required>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Reset Password Modal -->
                 <div class="modal fade" id="resetPasswordModal{{ $user->id }}" tabindex="-1">
@@ -107,7 +141,7 @@
                                     </div>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-light" data-bs-modal="dismiss">Cancel</button>
+                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                                     <button type="submit" class="btn btn-primary">Reset Password</button>
                                 </div>
                             </form>

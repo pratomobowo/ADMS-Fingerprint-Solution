@@ -99,6 +99,27 @@ class AdminController extends Controller
     }
 
     /**
+     * Update an admin user's name and email
+     */
+    public function updateUser(Request $request, $id)
+    {
+        $user = \App\Models\User::findOrFail($id);
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+        ]);
+
+        $user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+        ]);
+
+        return redirect()->route('admin.users')
+            ->with('success', "Data user {$user->name} berhasil diperbarui.");
+    }
+
+    /**
      * Reset a user's password
      */
     public function resetPassword(Request $request, $id)

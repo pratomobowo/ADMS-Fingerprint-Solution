@@ -39,6 +39,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('admin/users', [AdminController::class, 'users'])->name('admin.users');
     Route::post('admin/users', [AdminController::class, 'createUser'])->name('admin.users.create');
+    Route::patch('admin/users/{id}', [AdminController::class, 'updateUser'])->name('admin.users.update');
     Route::delete('admin/users/{id}', [AdminController::class, 'deleteUser'])->name('admin.users.delete');
     Route::patch('admin/users/{id}/reset-password', [AdminController::class, 'resetPassword'])->name('admin.users.reset-password');
 });
