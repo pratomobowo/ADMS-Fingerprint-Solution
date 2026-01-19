@@ -78,66 +78,71 @@ public function handshake(Request $request)
             }
             //attendance
             foreach ($arr as $rey) {
-                // $data = preg_split('/\s+/', trim($rey));
-                if(empty($rey)){
+                if(empty(trim($rey))){
                     continue;
                 }
-                    // $data = preg_split('/\s+/', trim($rey));
-                    $data = explode("\t",$rey);
-                    //dd($data);
-                    
-                    // Handle both BWN and SPK device formats
-                    // BWN: employee_id, timestamp, status1, status2, status3, status4, status5 (7 fields)
-                    // SPK: employee_id, timestamp, status1, status2, status3, status4, status5, status6, status7, status8, status9 (10 fields)
-                    
-                    $q['sn'] = $request->input('SN');
-                    $q['table'] = $request->input('table');
-                    $q['stamp'] = $request->input('Stamp');
-                    $q['employee_id'] = $data[0];
-                    $q['timestamp'] = $data[1];
-                    
-                    // Check if this is SPK device (has more than 7 fields)
-                    if (count($data) > 7) {
-                        // For SPK devices, skip status1 (data[2]) and start from status2 (data[3])
-                        $q['status1'] = $this->validateAndFormatInteger($data[3] ?? null);
-                        $q['status2'] = $this->validateAndFormatInteger($data[4] ?? null);
-                        $q['status3'] = $this->validateAndFormatInteger($data[5] ?? null);
-                        $q['status4'] = $this->validateAndFormatInteger($data[6] ?? null);
-                        $q['status5'] = $this->validateAndFormatInteger($data[7] ?? null);
-                        
-                        \Log::info('SPK device detected - skipping status1 field', [
-                            'sn' => $request->input('SN'),
-                            'skipped_status1' => $data[2] ?? null,
-                            'additional_fields' => array_slice($data, 8)
-                        ]);
-                    } else {
-                        // For BWN devices, use normal mapping
-                        $q['status1'] = $this->validateAndFormatInteger($data[2] ?? null);
-                        $q['status2'] = $this->validateAndFormatInteger($data[3] ?? null);
-                        $q['status3'] = $this->validateAndFormatInteger($data[4] ?? null);
-                        $q['status4'] = $this->validateAndFormatInteger($data[5] ?? null);
-                        $q['status5'] = $this->validateAndFormatInteger($data[6] ?? null);
-                    }
-                    
-                    // Log additional status fields for SPK devices (for debugging/monitoring)
-                    if (count($data) > 7) {
-                        \Log::info('SPK device detected with additional status fields', [
-                            'sn' => $request->input('SN'),
-                            'additional_fields' => array_slice($data, 7)
-                        ]);
-                    }
-                    
-                    $q['created_at'] = now();
-                    $q['updated_at'] = now();
-                    //dd($q);
-                    DB::table('attendances')->insert($q);
-                    $tot++;
-                // dd(DB::getQueryLog());
+                
+                // Use preg_split to handle both tabs (\t) and spaces flexibly
+                $data = preg_split('/\s+/', trim($rey));
+                
+                // Ensure we have at least ID and Timestamp
+                if (count($data) < 2) {
+                    \Log::warning('Malformed attendance record found', [
+                        'sn' => $request->input('SN'),
+                        'raw_row' => $rey
+                    ]);
+                    continue;
+                }
+                
+                // Handle both BWN and SPK device formats
+                // BWN: employee_id, timestamp, status1, status2, status3, status4, status5 (7 fields)
+                // SPK: employee_id, timestamp, status1, status2, status3, status4, status5, status6, status7, status8, status9 (10 fields)
+                
+                $q['sn'] = $request->input('SN');
+                $q['table'] = $request->input('table');
+                $q['stamp'] = $request->input('Stamp');
+                $q['employee_id'] = $data[0];
+                
+                // Combining date and time if they were split by space (now $data[1] is Date, $data[2] is Time)
+                // attendance format usually: ID[sep]Y-m-d H:i:s[sep]Status...
+                // If we split by \s+, the space in Y-m-d H:i:s results in $data[1] = Date and $data[2] = Time.
+                $q['timestamp'] = $data[1] . (isset($data[2]) ? ' ' . $data[2] : '');
+                
+                // Adjust index mapping because timestamp now occupies two slots ($data[1] and $data[2])
+                $offset = (strpos($rey, "\t") === false) ? 1 : 0; 
+                // Actually, let's just re-index based on standard format: ID, Timestamp, S1, S2, S3, S4, S5
+                // ZKteco timestamp is always Y-m-d H:i:s (has a space)
+                
+                // SPK devices usually have more fields. Let's detect by field count.
+                // If split by \s+, SPK (10-11 fields normally) will have more.
+                if (count($data) > 8) {
+                    // For SPK devices
+                    $q['status1'] = $this->validateAndFormatInteger($data[4] ?? null);
+                    $q['status2'] = $this->validateAndFormatInteger($data[5] ?? null);
+                    $q['status3'] = $this->validateAndFormatInteger($data[6] ?? null);
+                    $q['status4'] = $this->validateAndFormatInteger($data[7] ?? null);
+                    $q['status5'] = $this->validateAndFormatInteger($data[8] ?? null);
+                } else {
+                    // For BWN devices
+                    $q['status1'] = $this->validateAndFormatInteger($data[3] ?? null);
+                    $q['status2'] = $this->validateAndFormatInteger($data[4] ?? null);
+                    $q['status3'] = $this->validateAndFormatInteger($data[5] ?? null);
+                    $q['status4'] = $this->validateAndFormatInteger($data[6] ?? null);
+                    $q['status5'] = $this->validateAndFormatInteger($data[7] ?? null);
+                }
+                
+                $q['created_at'] = now();
+                $q['updated_at'] = now();
+                
+                DB::table('attendances')->insert($q);
+                $tot++;
             }
             return "OK: ".$tot;
-        } catch (Throwable $e) {
-            $data['error'] = $e;
-            DB::table('error_log')->insert($data);
+        } catch (\Throwable $e) {
+            $err['data'] = "Error in receiveRecords: " . $e->getMessage() . "\n" . $e->getTraceAsString();
+            $err['created_at'] = now();
+            $err['updated_at'] = now();
+            DB::table('error_log')->insert($err);
             report($e);
             return "ERROR: ".$tot."\n";
         }

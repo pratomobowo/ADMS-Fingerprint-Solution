@@ -10,6 +10,9 @@ class Attendance extends Model
     use HasFactory;
 
     protected $fillable = [
+        'sn',
+        'table',
+        'stamp',
         'employee_id',
         'timestamp',
         'status1',
@@ -27,4 +30,20 @@ class Attendance extends Model
         'status4' => 'boolean',
         'status5' => 'boolean',
     ];
+
+    /**
+     * Get device_sn attribute (alias for sn column)
+     */
+    public function getDeviceSnAttribute()
+    {
+        return $this->sn;
+    }
+
+    /**
+     * Set device_sn attribute (alias for sn column)
+     */
+    public function setDeviceSnAttribute($value)
+    {
+        $this->attributes['sn'] = $value;
+    }
 }

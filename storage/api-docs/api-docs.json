@@ -1,0 +1,1352 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "ADMS HR API",
+        "description": "API untuk integrasi data absensi antara ADMS dan aplikasi HR eksternal",
+        "contact": {
+            "email": "admin@adms.com"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "/api/v1",
+            "description": "API Server"
+        }
+    ],
+    "paths": {
+        "/admin/tokens": {
+            "get": {
+                "tags": [
+                    "API Token Management"
+                ],
+                "summary": "List all API tokens",
+                "description": "Retrieve a list of all API tokens (admin only)",
+                "operationId": "listApiTokens",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ApiToken"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "API Token Management"
+                ],
+                "summary": "Generate a new API token",
+                "description": "Create a new API token for authentication. The token is only visible in this response.",
+                "operationId": "createApiToken",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "description": "Token name/description",
+                                        "type": "string",
+                                        "example": "HR Application Token"
+                                    },
+                                    "expires_at": {
+                                        "description": "Optional expiration date",
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2026-11-15T00:00:00Z"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Token created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/ApiTokenWithToken"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/tokens/{id}/revoke": {
+            "put": {
+                "tags": [
+                    "API Token Management"
+                ],
+                "summary": "Revoke an API token",
+                "description": "Deactivate an API token to prevent further use",
+                "operationId": "revokeApiToken",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "API Token ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Token revoked successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/ApiToken"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Token not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/hr/attendances": {
+            "get": {
+                "tags": [
+                    "Attendances"
+                ],
+                "summary": "Get attendances with filters",
+                "description": "Retrieve attendance records with optional filtering by date range and employee ID",
+                "operationId": "getAttendances",
+                "parameters": [
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Start date for filtering (format: Y-m-d)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2025-11-01"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "End date for filtering (format: Y-m-d)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2025-11-15"
+                        }
+                    },
+                    {
+                        "name": "employee_id",
+                        "in": "query",
+                        "description": "Filter by employee ID",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "12345"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Number of records per page (default: 50, max: 100)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 50
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "description": "Number of records to skip (default: 0)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 0
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Attendance"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 150
+                                                },
+                                                "count": {
+                                                    "type": "integer",
+                                                    "example": 50
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 50
+                                                },
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "total_pages": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request parameters",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid or missing token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/hr/attendances/{id}": {
+            "get": {
+                "tags": [
+                    "Attendances"
+                ],
+                "summary": "Get single attendance by ID",
+                "description": "Retrieve a specific attendance record by its ID",
+                "operationId": "getAttendanceById",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Attendance ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/Attendance"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid or missing token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Attendance record not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/hr/employees/{employee_id}/attendances": {
+            "get": {
+                "tags": [
+                    "Attendances"
+                ],
+                "summary": "Get attendances for specific employee",
+                "description": "Retrieve attendance records for a specific employee with optional date filtering",
+                "operationId": "getAttendancesByEmployee",
+                "parameters": [
+                    {
+                        "name": "employee_id",
+                        "in": "path",
+                        "description": "Employee ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "12345"
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Start date for filtering (format: Y-m-d)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2025-11-01"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "End date for filtering (format: Y-m-d)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2025-11-15"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Number of records per page (default: 50, max: 100)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 50
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "description": "Number of records to skip (default: 0)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 0
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Attendance"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 150
+                                                },
+                                                "count": {
+                                                    "type": "integer",
+                                                    "example": 50
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 50
+                                                },
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "total_pages": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid employee ID or request parameters",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - Invalid or missing token",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Rate limit exceeded",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/webhooks": {
+            "get": {
+                "tags": [
+                    "Webhook Management"
+                ],
+                "summary": "List all webhook configurations",
+                "description": "Retrieve a list of all webhook configurations (admin only)",
+                "operationId": "listWebhooks",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/WebhookConfig"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Webhook Management"
+                ],
+                "summary": "Create a new webhook configuration",
+                "description": "Configure a new webhook endpoint to receive attendance data",
+                "operationId": "createWebhook",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/WebhookConfigRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Webhook created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/WebhookConfig"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/webhooks/{id}": {
+            "get": {
+                "tags": [
+                    "Webhook Management"
+                ],
+                "summary": "Get a webhook configuration",
+                "description": "Retrieve a specific webhook configuration by ID",
+                "operationId": "getWebhook",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Webhook configuration ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/WebhookConfig"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Webhook not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Webhook Management"
+                ],
+                "summary": "Update a webhook configuration",
+                "description": "Update an existing webhook configuration",
+                "operationId": "updateWebhook",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Webhook configuration ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/WebhookConfigRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Webhook updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/WebhookConfig"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Webhook not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Webhook Management"
+                ],
+                "summary": "Delete a webhook configuration",
+                "description": "Remove a webhook configuration",
+                "operationId": "deleteWebhook",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Webhook configuration ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Webhook deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Webhook configuration deleted successfully"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Webhook not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/webhooks/{id}/test": {
+            "post": {
+                "tags": [
+                    "Webhook Management"
+                ],
+                "summary": "Test a webhook configuration",
+                "description": "Send a test payload to verify webhook configuration",
+                "operationId": "testWebhook",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Webhook configuration ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Test result",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "success"
+                                                },
+                                                "http_status_code": {
+                                                    "type": "integer",
+                                                    "example": 200
+                                                },
+                                                "response_body": {
+                                                    "type": "string",
+                                                    "example": "OK"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Webhook not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "ApiToken": {
+                "title": "API Token",
+                "description": "API Token model (token field is hidden)",
+                "properties": {
+                    "id": {
+                        "description": "Token ID",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "description": "Token name/description",
+                        "type": "string",
+                        "example": "HR Application Token"
+                    },
+                    "last_used_at": {
+                        "description": "Last time the token was used",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-11-15T08:30:00Z",
+                        "nullable": true
+                    },
+                    "expires_at": {
+                        "description": "Token expiration date",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-11-15T00:00:00Z",
+                        "nullable": true
+                    },
+                    "is_active": {
+                        "description": "Whether the token is active",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "created_at": {
+                        "description": "Token creation timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-11-15T08:00:00Z"
+                    },
+                    "updated_at": {
+                        "description": "Token last update timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-11-15T08:00:00Z"
+                    }
+                },
+                "type": "object"
+            },
+            "ApiTokenWithToken": {
+                "title": "API Token with Token Value",
+                "description": "API Token model with token value (only visible on creation)",
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/ApiToken"
+                    },
+                    {
+                        "properties": {
+                            "token": {
+                                "description": "The actual token value (only visible on creation)",
+                                "type": "string",
+                                "example": "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
+                            }
+                        },
+                        "type": "object"
+                    }
+                ]
+            },
+            "Attendance": {
+                "title": "Attendance",
+                "description": "Attendance record model",
+                "properties": {
+                    "id": {
+                        "description": "Attendance record ID",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "employee_id": {
+                        "description": "Employee ID",
+                        "type": "string",
+                        "example": "12345"
+                    },
+                    "timestamp": {
+                        "description": "Attendance timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-11-15T08:30:00Z"
+                    },
+                    "device_sn": {
+                        "description": "Device serial number",
+                        "type": "string",
+                        "example": "BWN001"
+                    },
+                    "status": {
+                        "description": "Attendance status flags",
+                        "properties": {
+                            "status1": {
+                                "type": "boolean",
+                                "example": true
+                            },
+                            "status2": {
+                                "type": "boolean",
+                                "example": false
+                            },
+                            "status3": {
+                                "type": "boolean",
+                                "example": false
+                            },
+                            "status4": {
+                                "type": "boolean",
+                                "example": false
+                            },
+                            "status5": {
+                                "type": "boolean",
+                                "example": false
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "created_at": {
+                        "description": "Record creation timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-11-15T08:30:05Z"
+                    }
+                },
+                "type": "object"
+            },
+            "ErrorResponse": {
+                "title": "Error Response",
+                "description": "Standard error response format",
+                "properties": {
+                    "success": {
+                        "description": "Always false for error responses",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "error": {
+                        "description": "Error details",
+                        "properties": {
+                            "code": {
+                                "description": "Error code",
+                                "type": "string",
+                                "example": "INVALID_TOKEN"
+                            },
+                            "message": {
+                                "description": "Human-readable error message",
+                                "type": "string",
+                                "example": "Token tidak valid atau expired"
+                            },
+                            "details": {
+                                "description": "Additional error context",
+                                "type": "object",
+                                "example": []
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "WebhookPayload": {
+                "title": "Webhook Payload",
+                "description": "Payload sent to webhook endpoints when attendance is created",
+                "properties": {
+                    "event": {
+                        "description": "Event type",
+                        "type": "string",
+                        "example": "attendance.created"
+                    },
+                    "timestamp": {
+                        "description": "Event timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-11-15T08:30:05Z"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/Attendance"
+                    },
+                    "signature": {
+                        "description": "HMAC SHA256 signature for verification",
+                        "type": "string",
+                        "example": "a1b2c3d4e5f6..."
+                    }
+                },
+                "type": "object"
+            },
+            "WebhookConfig": {
+                "title": "Webhook Configuration",
+                "description": "Webhook configuration model",
+                "properties": {
+                    "id": {
+                        "description": "Webhook configuration ID",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "description": "Webhook name/description",
+                        "type": "string",
+                        "example": "HR System Webhook"
+                    },
+                    "url": {
+                        "description": "Webhook URL (must be HTTPS)",
+                        "type": "string",
+                        "format": "uri",
+                        "example": "https://hr.example.com/api/webhooks/attendance"
+                    },
+                    "is_active": {
+                        "description": "Whether the webhook is active",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "secret_key": {
+                        "description": "Secret key for signature verification",
+                        "type": "string",
+                        "example": "your-secret-key-here"
+                    },
+                    "headers": {
+                        "description": "Additional HTTP headers to send",
+                        "type": "object",
+                        "example": {
+                            "X-Custom-Header": "value"
+                        },
+                        "nullable": true
+                    },
+                    "retry_attempts": {
+                        "description": "Number of retry attempts on failure",
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "timeout": {
+                        "description": "Request timeout in seconds",
+                        "type": "integer",
+                        "example": 30
+                    },
+                    "created_at": {
+                        "description": "Configuration creation timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-11-15T08:00:00Z"
+                    },
+                    "updated_at": {
+                        "description": "Configuration last update timestamp",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-11-15T08:00:00Z"
+                    }
+                },
+                "type": "object"
+            },
+            "WebhookConfigRequest": {
+                "title": "Webhook Configuration Request",
+                "description": "Request body for creating/updating webhook configuration",
+                "required": [
+                    "name",
+                    "url",
+                    "secret_key"
+                ],
+                "properties": {
+                    "name": {
+                        "description": "Webhook name/description",
+                        "type": "string",
+                        "example": "HR System Webhook"
+                    },
+                    "url": {
+                        "description": "Webhook URL (must be HTTPS)",
+                        "type": "string",
+                        "format": "uri",
+                        "example": "https://hr.example.com/api/webhooks/attendance"
+                    },
+                    "is_active": {
+                        "description": "Whether the webhook is active",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "secret_key": {
+                        "description": "Secret key for signature verification",
+                        "type": "string",
+                        "example": "your-secret-key-here"
+                    },
+                    "headers": {
+                        "description": "Additional HTTP headers to send",
+                        "type": "object",
+                        "example": {
+                            "X-Custom-Header": "value"
+                        },
+                        "nullable": true
+                    },
+                    "retry_attempts": {
+                        "description": "Number of retry attempts on failure (default: 3)",
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "timeout": {
+                        "description": "Request timeout in seconds (default: 30)",
+                        "type": "integer",
+                        "example": 30
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "apiKey",
+                "description": "Enter token in format (Bearer <token>)",
+                "name": "Authorization",
+                "in": "header"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "API Token Management",
+            "description": "API Token Management"
+        },
+        {
+            "name": "Attendances",
+            "description": "Attendances"
+        },
+        {
+            "name": "Webhook Management",
+            "description": "Webhook Management"
+        }
+    ],
+    "security": [
+        {
+            "bearerAuth": []
+        }
+    ]
+}

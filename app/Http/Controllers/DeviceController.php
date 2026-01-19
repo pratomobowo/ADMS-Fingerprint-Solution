@@ -20,10 +20,16 @@ class DeviceController extends Controller
 
     public function DeviceLog(Request $request)
     {
-        $data['lable'] = "Devices Log";
-        $data['log'] = DB::table('device_log')->select('id','data','url')->orderBy('id','DESC')->get();
+        $sn = $request->query('sn');
+        $query = DB::table('device_log');
         
-        return view('devices.log',$data);
+        if ($sn) {
+            $query->where('sn', $sn);
+        }
+        
+        $log = $query->orderBy('id', 'desc')->get();
+        $lable = "Device Handshake Log" . ($sn ? " for $sn" : "");
+        return view('devices.log', compact('log', 'lable'));
     }
     
     public function FingerLog(Request $request)
@@ -38,6 +44,11 @@ class DeviceController extends Controller
 
         return view('devices.attendance', compact('attendances'));
         
+    }
+
+    public function ApiDocs() {
+        $tokens = DB::table('api_tokens')->select('id', 'name', 'is_active', 'expires_at', 'last_used_at', 'created_at')->get();
+        return view('api-docs', compact('tokens'));
     }
 
     // // Menampilkan form tambah device

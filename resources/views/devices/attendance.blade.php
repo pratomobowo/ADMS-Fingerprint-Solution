@@ -1,55 +1,136 @@
-@extends('layouts.app')  {{-- Asumsikan Anda memiliki layout utama --}}
+@extends('layouts.app')
 
 @section('content')
-<div class="container">
-    <h2 class="mb-4">Attendance</h2>
-
-    @if(session('success'))
-        <div class="alert alert-success">
-            {{ session('success') }}
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2>Attendance</h2>
+            <p class="text-secondary mb-0">Monitor real-time employee attendance logs</p>
         </div>
-    @endif
+        <div class="d-flex gap-2" id="exportButtonContainer">
+            <!-- DataTables buttons will be moved here -->
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <h5 class="card-title mb-0">Logs Records</h5>
+        <div class="d-flex gap-2">
+            <div class="input-group input-group-sm w-auto">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-secondary"></i></span>
+                <input type="text" id="attendanceSearch" class="form-control border-start-0" placeholder="Search logs...">
+            </div>
+            <select class="form-select form-select-sm w-auto" id="statusFilter">
+                <option value="">All Status</option>
+                <option value="1">Checked In</option>
+                <option value="0">Checked Out</option>
+            </select>
+        </div>
+    </div>
 
     <div class="table-responsive">
-        <table class="table table-bordered data-table">
-            <thead class="thead-dark">
+        <table class="table" id="attendanceTable">
+            <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>SN</th>
-                    <th>Employee ID</th>
+                    <th>Record</th>
+                    <th>Device SN</th>
+                    <th>Employee</th>
                     <th>Timestamp</th>
-                    <th>Status 1</th>
-                    <th>Status 2</th>
-                    <th>Status 3</th>
-                    <th>Status 4</th>
-                    <th>Status 5</th>
-                    
+                    <th class="text-center">S1</th>
+                    <th class="text-center">S2</th>
+                    <th class="text-center">S3</th>
+                    <th class="text-center">S4</th>
+                    <th class="text-center">S5</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($attendances as $attendance)
+                @forelse($attendances as $attendance)
                     <tr>
-                        <td>{{ $attendance->id }}</td>
-                        <td>{{ $attendance->sn }}</td>
-                        <td>{{ $attendance->employee_id }}</td>
-                        <td>{{ $attendance->timestamp }}</td>
-                        <td>{{ $attendance->status1 }}</td>
-                        <td>{{ $attendance->status2 }}</td>
-                        <td>{{ $attendance->status3 }}</td>
-                        <td>{{ $attendance->status4 }}</td>
-                        <td>{{ $attendance->status5 }}</td>
-
+                        <td class="font-medium text-secondary">#{{ $attendance->id }}</td>
+                        <td>
+                            <span class="text-xs border px-2 py-1 rounded bg-light font-mono">
+                                {{ $attendance->sn }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary-subtle text-primary rounded-circle p-2 me-2" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;">
+                                    {{ substr($attendance->employee_id, -1) }}
+                                </div>
+                                <span class="font-semibold">{{ $attendance->employee_id }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column">
+                                <span class="font-medium">{{ \Carbon\Carbon::parse($attendance->timestamp)->format('H:i:s') }}</span>
+                                <span class="text-secondary text-xs">{{ \Carbon\Carbon::parse($attendance->timestamp)->format('M d, Y') }}</span>
+                            </div>
+                        </td>
+                        @foreach(['status1', 'status2', 'status3', 'status4', 'status5'] as $status)
+                            <td class="text-center">
+                                @if($attendance->$status)
+                                    <i class="bi bi-check-circle-fill text-success" title="Active"></i>
+                                @else
+                                    <i class="bi bi-dash-circle text-light-emphasis" title="Inactive"></i>
+                                @endif
+                            </td>
+                        @endforeach
                     </tr>
-                @endforeach
+                @empty
+                    <tr>
+                        <td colspan="9" class="text-center py-5 text-secondary">
+                            <i class="bi bi-database-exclamation fs-1 d-block mb-3"></i>
+                            No attendance records found
+                        </td>
+                    </tr>
+                @endforelse
             </tbody>
         </table>
     </div>
-    
-    <!-- source: https://stackoverflow.com/a/70119390 -->
-    <div class="d-felx justify-content-center">
-        {{ $attendances->links() }}  {{-- Tampilkan pagination jika ada --}}
+
+    <div class="mt-4">
+        {{ $attendances->links() }}
     </div>
-
-
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    $(document).ready(function() {
+        // Initialize DataTable (client-side for the current page)
+        var table = $('#attendanceTable').DataTable({
+            "dom": 'Brtip',
+            "buttons": [
+                {
+                    extend: 'excel',
+                    text: '<i class="bi bi-file-earmark-excel me-1"></i> Excel',
+                    className: 'btn btn-sm btn-light border me-2'
+                },
+                {
+                    extend: 'csv',
+                    text: '<i class="bi bi-file-earmark-text me-1"></i> CSV',
+                    className: 'btn btn-sm btn-light border'
+                }
+            ],
+            "pageLength": 15,
+            "paging": false, // Disable DataTables pagination since we use Laravel's
+            "info": false
+        });
+
+        // Hide DataTables default buttons and move them to our custom container
+        table.buttons().container().appendTo('#exportButtonContainer');
+
+        $('#attendanceSearch').on('keyup', function() {
+            table.search($(this).val()).draw();
+        });
+
+        $('#statusFilter').on('change', function() {
+            var val = $(this).val();
+            // This is a bit tricky for server-side paginated data, 
+            // but we'll filter what's currently on the screen.
+            table.column(4).search(val ? 'Active' : '').draw(); // Example mapping to S1
+        });
+    });
+</script>
+@endpush
