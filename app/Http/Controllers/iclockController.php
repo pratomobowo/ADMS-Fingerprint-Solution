@@ -60,6 +60,15 @@ public function handshake(Request $request)
         $content['url'] = json_encode($request->all());
         $content['data'] = $request->getContent();;
         DB::table('finger_log')->insert($content);
+
+        // update status device
+        if ($request->has('SN')) {
+            DB::table('devices')->updateOrInsert(
+                ['no_sn' => $request->input('SN')],
+                ['online' => now()]
+            );
+        }
+
         try {
             // $post_content = $request->getContent();
             //$arr = explode("\n", $post_content);
