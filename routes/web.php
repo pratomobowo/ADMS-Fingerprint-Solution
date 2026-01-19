@@ -46,7 +46,7 @@ Route::middleware('auth')->group(function () {
 // iClock Device Routes (no auth - device communication)
 Route::get('/iclock/cdata', [iclockController::class, 'handshake']);
 Route::post('/iclock/cdata', [iclockController::class, 'receiveRecords']);
-Route::get('/iclock/test', [iclockController::class, 'test']);
+Route::get('/iclock/getrequest', [iclockController::class, 'getrequest']);
 Route::get('/iclock/getrequest', [iclockController::class, 'getrequest']);
 
 // Redirect root to devices (will redirect to login if not authenticated)
