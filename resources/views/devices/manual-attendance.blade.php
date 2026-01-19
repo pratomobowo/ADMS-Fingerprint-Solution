@@ -4,12 +4,12 @@
 <div class="page-header">
     <div class="d-flex justify-content-between align-items-center">
         <div>
-            <h2><i class="bi bi-incognito me-2"></i>Absen Manual</h2>
-            <p class="text-secondary mb-0">Halaman rahasia untuk input absensi manual | 🤫 Ssst...</p>
+            <h2><i class="bi bi-keyboard me-2"></i>Input Absensi Manual</h2>
+            <p class="text-secondary mb-0">Form untuk menambahkan data absensi secara manual</p>
         </div>
         <div>
-            <span class="badge bg-danger">
-                <i class="bi bi-shield-lock me-1"></i> SECRET
+            <span class="badge bg-secondary">
+                <i class="bi bi-shield-lock me-1"></i> Admin Only
             </span>
         </div>
     </div>
