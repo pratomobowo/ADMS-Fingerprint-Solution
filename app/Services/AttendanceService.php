@@ -11,16 +11,26 @@ class AttendanceService
     /**
      * Get attendances by date range with filtering and pagination
      *
-     * @param string $startDate
-     * @param string $endDate
+     * @param string|null $startDate
+     * @param string|null $endDate
      * @param array $filters
      * @return LengthAwarePaginator
      */
-    public function getAttendancesByDateRange(string $startDate, string $endDate, array $filters = []): LengthAwarePaginator
+    public function getAttendancesByDateRange(?string $startDate, ?string $endDate, array $filters = []): LengthAwarePaginator
     {
-        $query = Attendance::query()
-            ->whereBetween('timestamp', [$startDate, $endDate])
-            ->orderBy('timestamp', 'desc');
+        $query = Attendance::query()->orderBy('timestamp', 'desc');
+
+        // Apply date range filter if both dates provided
+        if (!empty($startDate) && !empty($endDate)) {
+            // Ensure end_date includes the full day (23:59:59)
+            $startDateTime = $startDate . ' 00:00:00';
+            $endDateTime = $endDate . ' 23:59:59';
+            $query->whereBetween('timestamp', [$startDateTime, $endDateTime]);
+        } elseif (!empty($startDate)) {
+            $query->where('timestamp', '>=', $startDate . ' 00:00:00');
+        } elseif (!empty($endDate)) {
+            $query->where('timestamp', '<=', $endDate . ' 23:59:59');
+        }
 
         // Apply employee_id filter if provided
         if (!empty($filters['employee_id'])) {
