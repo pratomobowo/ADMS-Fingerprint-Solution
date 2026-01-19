@@ -124,16 +124,24 @@ public function handshake(Request $request)
                 
                 // SPK devices usually have more fields. Let's detect by field count.
                 // If split by \s+, SPK (10-11 fields normally) will have more.
+                // ZKTeco ATTLOG format: PIN, DateTime, Status, VerifyMode, WorkCode, Reserved...
+                // Status: 0=In, 1=Out, 255=No button pressed (treat as 0)
+                // VerifyMode: 1=Finger, 15=Face, 2=Password, 3=Card
+                
                 if (count($data) > 8) {
-                    // For SPK devices
-                    $q['status1'] = $this->validateAndFormatInteger($data[4] ?? null);
-                    $q['status2'] = $this->validateAndFormatInteger($data[5] ?? null);
-                    $q['status3'] = $this->validateAndFormatInteger($data[6] ?? null);
-                    $q['status4'] = $this->validateAndFormatInteger($data[7] ?? null);
-                    $q['status5'] = $this->validateAndFormatInteger($data[8] ?? null);
+                    // For SPK devices (more fields due to space split)
+                    // data[3] = Status (check in/out), data[4] = VerifyMode
+                    $rawStatus = $this->validateAndFormatInteger($data[3] ?? null);
+                    $q['status1'] = ($rawStatus === 255 || $rawStatus === null) ? 0 : $rawStatus;
+                    $q['status2'] = $this->validateAndFormatInteger($data[4] ?? null);
+                    $q['status3'] = $this->validateAndFormatInteger($data[5] ?? null);
+                    $q['status4'] = $this->validateAndFormatInteger($data[6] ?? null);
+                    $q['status5'] = $this->validateAndFormatInteger($data[7] ?? null);
                 } else {
-                    // For BWN devices
-                    $q['status1'] = $this->validateAndFormatInteger($data[3] ?? null);
+                    // For BWN devices (fewer fields)
+                    // data[3] = Status, data[4] = VerifyMode
+                    $rawStatus = $this->validateAndFormatInteger($data[3] ?? null);
+                    $q['status1'] = ($rawStatus === 255 || $rawStatus === null) ? 0 : $rawStatus;
                     $q['status2'] = $this->validateAndFormatInteger($data[4] ?? null);
                     $q['status3'] = $this->validateAndFormatInteger($data[5] ?? null);
                     $q['status4'] = $this->validateAndFormatInteger($data[6] ?? null);

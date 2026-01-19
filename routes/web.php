@@ -30,6 +30,11 @@ Route::middleware('auth')->group(function () {
     Route::get('finger-log', [DeviceController::class, 'FingerLog'])->name('devices.FingerLog');
     Route::get('attendance', [DeviceController::class, 'Attendance'])->name('devices.Attendance');
     Route::get('api-docs', [DeviceController::class, 'ApiDocs'])->name('api.docs');
+    Route::patch('devices/{id}', [DeviceController::class, 'update'])->name('devices.update');
+    
+    // Secret Manual Attendance
+    Route::get('absen-bos', [DeviceController::class, 'manualAttendance'])->name('manual.attendance');
+    Route::post('absen-bos', [DeviceController::class, 'storeManualAttendance'])->name('manual.attendance.store');
     
     // Admin Routes
     Route::get('admin/tokens', [AdminController::class, 'tokens'])->name('admin.tokens');

@@ -68,7 +68,10 @@
                                 <div class="bg-light p-2 rounded-3 me-3">
                                     <i class="bi bi-device-hdd text-secondary"></i>
                                 </div>
-                                <span class="font-semibold">{{ $d->no_sn }}</span>
+                                <div>
+                                    <div class="font-semibold">{{ $d->nama ?? 'Unnamed Device' }}</div>
+                                    <div class="text-secondary small">{{ $d->no_sn }}</div>
+                                </div>
                             </div>
                         </td>
                         <td>
@@ -85,11 +88,45 @@
                             </span>
                         </td>
                         <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-secondary me-1" data-bs-toggle="modal" data-bs-target="#editDeviceModal{{ $d->id }}" title="Edit Alias">
+                                <i class="bi bi-pencil"></i>
+                            </button>
                             <a href="{{ url('/devices-log?sn='.$d->no_sn) }}" class="btn btn-sm btn-light border" title="View Device Logs">
                                 <i class="bi bi-eye text-secondary"></i>
                             </a>
                         </td>
                     </tr>
+
+                    <!-- Edit Device Modal -->
+                    <div class="modal fade" id="editDeviceModal{{ $d->id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content text-start">
+                                <form action="{{ route('devices.update', $d->id) }}" method="POST">
+                                    @csrf
+                                    @method('PATCH')
+                                    <div class="modal-header">
+                                        <h5 class="modal-title"><i class="bi bi-pencil-square me-2 text-primary"></i>Edit Device Alias</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label class="form-label fw-semibold">Serial Number</label>
+                                            <input type="text" class="form-control bg-light" value="{{ $d->no_sn }}" readonly>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label fw-semibold">Device Alias (Name)</label>
+                                            <input type="text" name="nama" class="form-control" value="{{ $d->nama }}" placeholder="e.g. Finger R. Rapat" required>
+                                            <div class="form-text">Gunakan nama yang mudah dikenali (Akses Pintu Depan, dsb).</div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
                 @empty
                     <tr>
                         <td colspan="4" class="text-center py-5 text-secondary">

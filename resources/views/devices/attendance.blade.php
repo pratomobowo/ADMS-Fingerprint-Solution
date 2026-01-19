@@ -49,9 +49,14 @@
                     <tr>
                         <td class="font-medium text-secondary">#{{ $attendance->id }}</td>
                         <td>
-                            <span class="text-xs border px-2 py-1 rounded bg-light font-mono">
-                                {{ $attendance->sn }}
-                            </span>
+                            @if($attendance->device_name)
+                                <div class="font-medium">{{ $attendance->device_name }}</div>
+                                <div class="text-secondary text-xs">{{ $attendance->sn }}</div>
+                            @else
+                                <span class="text-xs border px-2 py-1 rounded bg-light font-mono">
+                                    {{ $attendance->sn }}
+                                </span>
+                            @endif
                         </td>
                         <td>
                             <div class="d-flex align-items-center">
@@ -69,10 +74,34 @@
                         </td>
                         @foreach(['status1', 'status2', 'status3', 'status4', 'status5'] as $status)
                             <td class="text-center">
-                                @if($attendance->$status)
-                                    <i class="bi bi-check-circle-fill text-success" title="Active"></i>
+                                @if($status === 'status1')
+                                    {{-- S1: Status Check In/Out --}}
+                                    @if($attendance->status1 == 0)
+                                        <i class="bi bi-box-arrow-in-right text-success" title="Check In"></i>
+                                    @elseif($attendance->status1 == 1)
+                                        <i class="bi bi-box-arrow-right text-warning" title="Check Out"></i>
+                                    @else
+                                        <span class="badge bg-secondary">{{ $attendance->status1 }}</span>
+                                    @endif
+                                @elseif($status === 'status2')
+                                    {{-- S2: Verify Mode (1=Finger, 15=Face) --}}
+                                    @if($attendance->status2 == 1)
+                                        <i class="bi bi-fingerprint text-primary" title="Fingerprint"></i>
+                                    @elseif($attendance->status2 == 15)
+                                        <i class="bi bi-person-bounding-box text-info" title="Face Recognition"></i>
+                                    @elseif($attendance->status2 == 2)
+                                        <i class="bi bi-key text-secondary" title="Password"></i>
+                                    @elseif($attendance->status2 == 3)
+                                        <i class="bi bi-credit-card text-dark" title="Card"></i>
+                                    @else
+                                        <span class="badge bg-secondary">{{ $attendance->status2 }}</span>
+                                    @endif
                                 @else
-                                    <i class="bi bi-dash-circle text-light-emphasis" title="Inactive"></i>
+                                    @if($attendance->$status)
+                                        <i class="bi bi-check-circle-fill text-success" title="Active"></i>
+                                    @else
+                                        <i class="bi bi-dash-circle text-light-emphasis" title="Inactive"></i>
+                                    @endif
                                 @endif
                             </td>
                         @endforeach
@@ -115,7 +144,8 @@
             ],
             "pageLength": 15,
             "paging": false, // Disable DataTables pagination since we use Laravel's
-            "info": false
+            "info": false,
+            "ordering": false // Preserve server-side ordering (Laravel DESC)
         });
 
         // Hide DataTables default buttons and move them to our custom container
