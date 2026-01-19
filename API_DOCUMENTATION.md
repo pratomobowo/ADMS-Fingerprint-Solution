@@ -33,11 +33,13 @@ Mengambil semua data absensi dengan filter opsional.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `start_date` | string | No | Tanggal mulai (format: YYYY-MM-DD) |
-| `end_date` | string | No | Tanggal akhir (format: YYYY-MM-DD) |
+| `start_date` | string | No | Tanggal mulai (format: YYYY-MM-DD). Otomatis dari 00:00:00 |
+| `end_date` | string | No | Tanggal akhir (format: YYYY-MM-DD). Otomatis sampai 23:59:59 |
 | `employee_id` | string | No | Filter berdasarkan ID karyawan |
 | `limit` | integer | No | Jumlah record per halaman (default: 50, max: 100) |
 | `offset` | integer | No | Jumlah record yang di-skip (default: 0) |
+
+> **Note:** Jika `start_date` dan `end_date` tidak diisi, API akan mengembalikan semua data (dengan pagination).
 
 **Response:**
 ```json
