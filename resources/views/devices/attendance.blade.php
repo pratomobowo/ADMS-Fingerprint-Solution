@@ -74,35 +74,7 @@
                         </td>
                         @foreach(['status1', 'status2', 'status3', 'status4', 'status5'] as $status)
                             <td class="text-center">
-                                @if($status === 'status1')
-                                    {{-- S1: Status Check In/Out --}}
-                                    @if($attendance->status1 == 0)
-                                        <i class="bi bi-box-arrow-in-right text-success" title="Check In"></i>
-                                    @elseif($attendance->status1 == 1)
-                                        <i class="bi bi-box-arrow-right text-warning" title="Check Out"></i>
-                                    @else
-                                        <span class="badge bg-secondary">{{ $attendance->status1 }}</span>
-                                    @endif
-                                @elseif($status === 'status2')
-                                    {{-- S2: Verify Mode (1=Finger, 15=Face) --}}
-                                    @if($attendance->status2 == 1)
-                                        <i class="bi bi-fingerprint text-primary" title="Fingerprint"></i>
-                                    @elseif($attendance->status2 == 15)
-                                        <i class="bi bi-person-bounding-box text-info" title="Face Recognition"></i>
-                                    @elseif($attendance->status2 == 2)
-                                        <i class="bi bi-key text-secondary" title="Password"></i>
-                                    @elseif($attendance->status2 == 3)
-                                        <i class="bi bi-credit-card text-dark" title="Card"></i>
-                                    @else
-                                        <span class="badge bg-secondary">{{ $attendance->status2 }}</span>
-                                    @endif
-                                @else
-                                    @if($attendance->$status)
-                                        <i class="bi bi-check-circle-fill text-success" title="Active"></i>
-                                    @else
-                                        <i class="bi bi-dash-circle text-light-emphasis" title="Inactive"></i>
-                                    @endif
-                                @endif
+                                <span class="badge bg-light text-dark border">{{ $attendance->$status ?? '-' }}</span>
                             </td>
                         @endforeach
                     </tr>
