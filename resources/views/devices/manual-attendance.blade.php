@@ -55,13 +55,23 @@
             <!-- Date -->
             <div class="col-md-6">
                 <label class="form-label fw-semibold">Tanggal Absen <span class="text-danger">*</span></label>
-                <input type="date" name="date" class="form-control" value="{{ date('Y-m-d') }}" required>
+                <div class="input-group">
+                    <input type="date" name="date" id="attendance_date" class="form-control" value="{{ now()->format('Y-m-d') }}" required>
+                    <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('attendance_date').value = '{{ now()->format('Y-m-d') }}'">
+                        Today
+                    </button>
+                </div>
             </div>
             
             <!-- Time -->
             <div class="col-md-6">
                 <label class="form-label fw-semibold">Jam Absen <span class="text-danger">*</span></label>
-                <input type="time" name="time" class="form-control" value="{{ date('H:i') }}" required>
+                <div class="input-group">
+                    <input type="time" name="time" id="attendance_time" class="form-control" value="{{ now()->format('H:i') }}" required>
+                    <button class="btn btn-outline-secondary" type="button" id="btn_now">
+                        Now
+                    </button>
+                </div>
             </div>
             
             <!-- S1: Status Check In/Out -->
@@ -102,3 +112,14 @@
     </form>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.getElementById('btn_now').addEventListener('click', function() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        document.getElementById('attendance_time').value = `${hours}:${minutes}`;
+    });
+</script>
+@endpush
