@@ -26,10 +26,13 @@ public function handshake(Request $request)
     ];
     DB::table('device_log')->insert($data);
 
-    // update status device
+    // update status device with IP address
     DB::table('devices')->updateOrInsert(
         ['no_sn' => $request->input('SN')],
-        ['online' => now()]
+        [
+            'online' => now(),
+            'ip_address' => $request->ip(),
+        ]
     );
 
     $r = "GET OPTION FROM: {$request->input('SN')}\r\n" .

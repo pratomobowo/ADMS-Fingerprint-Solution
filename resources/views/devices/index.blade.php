@@ -55,6 +55,7 @@
             <thead>
                 <tr>
                     <th>Serial Number</th>
+                    <th>IP Address</th>
                     <th>Status</th>
                     <th>Last Online</th>
                     <th class="text-end">Actions</th>
@@ -75,6 +76,13 @@
                             </div>
                         </td>
                         <td>
+                            @if($d->ip_address)
+                                <code class="small">{{ $d->ip_address }}</code>
+                            @else
+                                <span class="text-secondary small">-</span>
+                            @endif
+                        </td>
+                        <td>
                             @if($d->online && \Carbon\Carbon::parse($d->online)->gt(now()->subMinutes(30)))
                                 <span class="badge badge-online">Online</span>
                             @else
@@ -88,6 +96,9 @@
                             </span>
                         </td>
                         <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-primary me-1 ping-btn" data-device-id="{{ $d->id }}" title="Test Connection">
+                                <i class="bi bi-wifi"></i>
+                            </button>
                             <button type="button" class="btn btn-sm btn-outline-secondary me-1" data-bs-toggle="modal" data-bs-target="#editDeviceModal{{ $d->id }}" title="Edit Alias">
                                 <i class="bi bi-pencil"></i>
                             </button>
@@ -147,7 +158,7 @@
         var table = $('#devicesTable').DataTable({
             "dom": '<"top"i>rt<"bottom"lp><"clear">',
             "pageLength": 10,
-            "order": [[1, "desc"]], // Sort by status or serial
+            "order": [[2, "desc"]], // Sort by status column
             "language": {
                 "emptyTable": "No devices available"
             }
@@ -156,6 +167,53 @@
         $('#deviceSearch').on('keyup', function() {
             table.search($(this).val()).draw();
         });
+
+        // Ping button handler
+        $(document).on('click', '.ping-btn', function() {
+            var btn = $(this);
+            var deviceId = btn.data('device-id');
+            var originalHtml = btn.html();
+            
+            // Show loading state
+            btn.prop('disabled', true);
+            btn.html('<span class="spinner-border spinner-border-sm" role="status"></span>');
+            
+            $.ajax({
+                url: '/devices/' + deviceId + '/ping',
+                method: 'GET',
+                dataType: 'json',
+                success: function(response) {
+                    var alertClass = response.success ? 'alert-success' : 'alert-warning';
+                    var icon = response.success ? 'bi-check-circle' : 'bi-exclamation-triangle';
+                    
+                    var html = '<div class="alert ' + alertClass + ' alert-dismissible fade show" role="alert">' +
+                        '<i class="bi ' + icon + ' me-2"></i>' +
+                        '<strong>' + (response.device ? response.device.serial : 'Device') + '</strong>: ' + response.ping_result;
+                    
+                    if (response.device && response.device.ip) {
+                        html += ' <span class="badge bg-secondary">' + response.device.ip + '</span>';
+                    }
+                    
+                    if (response.device && response.device.last_seen) {
+                        html += '<br><small class="text-muted">Last seen: ' + response.device.last_seen + '</small>';
+                    }
+                    
+                    html += '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
+                    
+                    // Show result at top of card
+                    $('.card').first().prepend(html);
+                },
+                error: function(xhr) {
+                    var msg = xhr.responseJSON ? xhr.responseJSON.message : 'Failed to ping device';
+                    alert('Error: ' + msg);
+                },
+                complete: function() {
+                    btn.prop('disabled', false);
+                    btn.html(originalHtml);
+                }
+            });
+        });
     });
 </script>
 @endpush
+

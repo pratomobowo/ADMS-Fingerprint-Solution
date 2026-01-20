@@ -14,7 +14,7 @@ class DeviceController extends Controller
     public function index(Request $request)
     {
         $data['lable'] = "Devices";
-        $data['log'] = DB::table('devices')->select('id','nama','no_sn','online')->orderBy('online', 'DESC')->get();
+        $data['log'] = DB::table('devices')->select('id','nama','no_sn','ip_address','online')->orderBy('online', 'DESC')->get();
         return view('devices.index',$data);
     }
 
@@ -155,4 +155,54 @@ class DeviceController extends Controller
 
     //     return redirect()->route('devices.index')->with('success', 'Device berhasil dihapus!');
     // }
+
+    /**
+     * Test connection to device by pinging its IP
+     */
+    public function pingDevice(Request $request, $id)
+    {
+        $device = DB::table('devices')->where('id', $id)->first();
+        
+        if (!$device) {
+            return response()->json(['success' => false, 'message' => 'Device not found'], 404);
+        }
+        
+        if (empty($device->ip_address)) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'IP address not available. Device has not connected yet.',
+                'device' => $device->no_sn
+            ]);
+        }
+        
+        // Ping the device (2 packets, 2 second timeout)
+        $output = [];
+        $returnCode = 0;
+        
+        // Cross-platform ping command
+        if (PHP_OS === 'WINNT') {
+            exec("ping -n 2 -w 2000 " . escapeshellarg($device->ip_address) . " 2>&1", $output, $returnCode);
+        } else {
+            exec("ping -c 2 -W 2 " . escapeshellarg($device->ip_address) . " 2>&1", $output, $returnCode);
+        }
+        
+        $pingSuccess = ($returnCode === 0);
+        $outputText = implode("\n", $output);
+        
+        // Calculate last seen
+        $lastSeen = $device->online ? \Carbon\Carbon::parse($device->online)->diffForHumans() : 'Never';
+        
+        return response()->json([
+            'success' => $pingSuccess,
+            'device' => [
+                'serial' => $device->no_sn,
+                'name' => $device->nama,
+                'ip' => $device->ip_address,
+                'last_seen' => $lastSeen,
+                'online_at' => $device->online
+            ],
+            'ping_result' => $pingSuccess ? 'Device is reachable' : 'Device is not reachable',
+            'details' => $outputText
+        ]);
+    }
 }
