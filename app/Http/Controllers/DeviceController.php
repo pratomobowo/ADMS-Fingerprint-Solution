@@ -15,9 +15,14 @@ class DeviceController extends Controller
     {
         $data['lable'] = "Devices";
         $data['log'] = DB::table('devices')->select('id','nama','no_sn','ip_address','online')->orderBy('online', 'DESC')->get();
-        return view('devices.index',$data);
+        return view('devices.index', $data);
     }
 
+    public function destroy($id)
+    {
+        DB::table('devices')->where('id', $id)->delete();
+        return redirect()->route('devices.index')->with('success', 'Perangkat berhasil dihapus.');
+    }
     
     public function FingerLog(Request $request)
     {

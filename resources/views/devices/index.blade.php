@@ -102,9 +102,16 @@
                             <button type="button" class="btn btn-sm btn-outline-secondary me-1" data-bs-toggle="modal" data-bs-target="#editDeviceModal{{ $d->id }}" title="Edit Alias">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <a href="{{ url('/devices-log?sn='.$d->no_sn) }}" class="btn btn-sm btn-light border" title="View Device Logs">
+                            <a href="{{ route('admin.logs', ['type' => 'device', 'sn' => $d->no_sn]) }}" class="btn btn-sm btn-light border me-1" title="View Device Logs">
                                 <i class="bi bi-eye text-secondary"></i>
                             </a>
+                            <form action="{{ route('devices.destroy', $d->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this device? This action cannot be undone.');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Device">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
                         </td>
                     </tr>
 

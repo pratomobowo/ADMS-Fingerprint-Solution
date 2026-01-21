@@ -31,6 +31,7 @@ Route::middleware('auth')->group(function () {
     Route::get('attendance', [DeviceController::class, 'Attendance'])->name('devices.Attendance');
     Route::get('api-docs', [DeviceController::class, 'ApiDocs'])->name('api.docs');
     Route::patch('devices/{id}', [DeviceController::class, 'update'])->name('devices.update');
+    Route::delete('devices/{id}', [DeviceController::class, 'destroy'])->name('devices.destroy');
     Route::get('devices/{id}/ping', [DeviceController::class, 'pingDevice'])->name('devices.ping');
     
     // System Logs
