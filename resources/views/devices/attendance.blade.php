@@ -19,8 +19,18 @@
             <form method="GET" action="{{ route('devices.Attendance') }}" class="d-flex gap-2">
                 <input type="date" name="start_date" class="form-control form-control-sm" value="{{ request('start_date') }}" placeholder="Start Date">
                 <input type="date" name="end_date" class="form-control form-control-sm" value="{{ request('end_date') }}" placeholder="End Date">
+                
+                <select name="sn" class="form-select form-select-sm" style="max-width: 200px;">
+                    <option value="">All Devices</option>
+                    @foreach($devices as $device)
+                        <option value="{{ $device->no_sn }}" {{ request('sn') == $device->no_sn ? 'selected' : '' }}>
+                            {{ $device->nama ?? 'Unnamed' }} ({{ $device->no_sn }})
+                        </option>
+                    @endforeach
+                </select>
+
                 <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-filter"></i></button>
-                @if(request('start_date') || request('end_date'))
+                @if(request('start_date') || request('end_date') || request('sn'))
                     <a href="{{ route('devices.Attendance') }}" class="btn btn-sm btn-secondary" title="Reset Filter"><i class="bi bi-x-lg"></i></a>
                 @endif
             </form>

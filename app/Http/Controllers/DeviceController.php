@@ -39,6 +39,9 @@ class DeviceController extends Controller
         return view('devices.log',$data);
     }
     public function Attendance(Request $request) {
+        // Get list of devices for filter
+        $devices = DB::table('devices')->select('nama', 'no_sn')->get();
+
         $query = DB::table('attendances')
             ->leftJoin('devices', 'attendances.sn', '=', 'devices.no_sn')
             ->select('attendances.*', 'devices.nama as device_name');
@@ -55,12 +58,17 @@ class DeviceController extends Controller
             $query->where('attendances.timestamp', '<=', $endDate . ' 23:59:59');
         }
 
+        // Filter by Device SN
+        if ($request->filled('sn')) {
+            $query->where('attendances.sn', $request->input('sn'));
+        }
+
         $attendances = $query->orderBy('attendances.timestamp', 'DESC')
             ->orderBy('attendances.id', 'DESC') // Secondary sort for stability
             ->paginate(15)
             ->withQueryString(); // Keep filters in pagination links
 
-        return view('devices.attendance', compact('attendances'));
+        return view('devices.attendance', compact('attendances', 'devices'));
     }
 
     public function ApiDocs() {
