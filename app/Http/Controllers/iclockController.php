@@ -36,22 +36,37 @@ public function handshake(Request $request)
     );
 
     // Check for specific device resync request (Temp Hack)
-    $stamp = ($request->input('SN') === 'SPK7245000716') ? 0 : 9999;
-
-    $r = "GET OPTION FROM: {$request->input('SN')}\r\n" .
-         "Stamp={$stamp}\r\n" .
-         "OpStamp=" . time() . "\r\n" .
-         "ErrorDelay=60\r\n" .
-         "Delay=30\r\n" .
-         "ResLogDay=18250\r\n" .
-         "ResLogDelCount=10000\r\n" .
-         "ResLogCount=50000\r\n" .
-         "TransTimes=00:00;14:05\r\n" .
-         "TransInterval=1\r\n" .
-         "TransFlag=1111000000\r\n" .
-        //  "TimeZone=7\r\n" .
-         "Realtime=1\r\n" .
-         "Encrypt=0";
+    if ($request->input('SN') === 'SPK7245000716') {
+        $stamp = 0; // Force full resync
+        // Simplified response for tricky device
+        $r = "GET OPTION FROM: {$request->input('SN')}\r\n" .
+             "Stamp={$stamp}\r\n" .
+             "ErrorDelay=30\r\n" .
+             "Delay=10\r\n" .
+             "ResLogDay=18250\r\n" .
+             "ResLogDelCount=10000\r\n" .
+             "ResLogCount=50000\r\n" .
+             "TransTimes=00:00;14:05\r\n" .
+             "TransInterval=1\r\n" .
+             "TransFlag=1111000000\r\n" .
+             "Realtime=1\r\n" .
+             "Encrypt=0";
+    } else {
+        $stamp = 9999;
+        $r = "GET OPTION FROM: {$request->input('SN')}\r\n" .
+             "Stamp={$stamp}\r\n" .
+             "OpStamp=" . time() . "\r\n" .
+             "ErrorDelay=60\r\n" .
+             "Delay=30\r\n" .
+             "ResLogDay=18250\r\n" .
+             "ResLogDelCount=10000\r\n" .
+             "ResLogCount=50000\r\n" .
+             "TransTimes=00:00;14:05\r\n" .
+             "TransInterval=1\r\n" .
+             "TransFlag=1111000000\r\n" .
+             "Realtime=1\r\n" .
+             "Encrypt=0";
+    }
 
     return $r;
 }
