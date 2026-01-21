@@ -108,6 +108,11 @@ class DeviceController extends Controller
             $query->where('attendances.sn', $request->input('sn'));
         }
 
+        // Filter by Employee ID
+        if ($request->filled('employee_id')) {
+            $query->where('attendances.employee_id', $request->input('employee_id'));
+        }
+
         $attendances = $query->orderBy('attendances.timestamp', 'DESC')
             ->orderBy('attendances.id', 'DESC') // Secondary sort for stability
             ->paginate(15)

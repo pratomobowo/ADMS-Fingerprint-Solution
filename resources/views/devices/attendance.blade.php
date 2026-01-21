@@ -29,8 +29,10 @@
                     @endforeach
                 </select>
 
+                <input type="text" name="employee_id" class="form-control form-control-sm" value="{{ request('employee_id') }}" placeholder="Emp ID" style="max-width: 100px;">
+
                 <button type="submit" class="btn btn-sm btn-primary" title="Apply Filter"><i class="bi bi-filter"></i> Apply</button>
-                @if(request()->hasAny(['start_date', 'end_date', 'sn']))
+                @if(request()->hasAny(['start_date', 'end_date', 'sn', 'employee_id']))
                     <a href="{{ route('devices.Attendance') }}" class="btn btn-sm btn-danger text-white" title="Clear Filters">
                         <i class="bi bi-x-circle me-1"></i> Clear
                     </a>
@@ -38,7 +40,7 @@
             </form>
             
             <div class="d-flex align-items-center gap-2">
-                @if(request()->hasAny(['start_date', 'end_date', 'sn']))
+                @if(request()->hasAny(['start_date', 'end_date', 'sn', 'employee_id']))
                     <span class="badge bg-info text-dark">{{ $attendances->total() }} Records Found</span>
                 @else
                     <span class="badge bg-secondary text-light">{{ $attendances->total() }} Total Records</span>
