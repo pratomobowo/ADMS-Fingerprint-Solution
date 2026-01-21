@@ -126,13 +126,10 @@
 </div>
 
 <!-- SECTION 2: NEW EDIT HISTORY SECTION -->
-<div class="card border-info">
-    <div class="card-header bg-info bg-opacity-10 py-3 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0 text-dark">
-            <i class="bi bi-pencil-square me-2"></i>Koreksi / Edit History Absen
-        </h5>
-        <small class="text-muted">Cari ID karyawan untuk mengedit data lama</small>
-    </div>
+<div class="card mb-5">
+    <h5 class="card-header bg-white py-3">
+        <i class="bi bi-pencil-square me-2 text-primary"></i>Koreksi / Edit History Absen
+    </h5>
     <div class="card-body">
         
         <!-- Search Bar -->
@@ -142,8 +139,9 @@
                 <div class="input-group">
                     <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
                     <input type="text" name="employee_id" class="form-control" placeholder="Contoh: 191" value="{{ $employee_id ?? '' }}" required>
-                    <button class="btn btn-info text-white" type="submit">Cari History</button>
+                    <button class="btn btn-primary" type="submit">Cari History</button>
                 </div>
+                <div class="form-text">Cari ID karyawan untuk melihat dan mengedit data lama.</div>
             </div>
         </form>
         
