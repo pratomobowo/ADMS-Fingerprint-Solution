@@ -29,15 +29,20 @@
                     @endforeach
                 </select>
 
-                <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-filter"></i></button>
-                @if(request('start_date') || request('end_date') || request('sn'))
-                    <a href="{{ route('devices.Attendance') }}" class="btn btn-sm btn-secondary" title="Reset Filter"><i class="bi bi-x-lg"></i></a>
+                <button type="submit" class="btn btn-sm btn-primary" title="Apply Filter"><i class="bi bi-filter"></i> Apply</button>
+                @if(request()->hasAny(['start_date', 'end_date', 'sn']))
+                    <a href="{{ route('devices.Attendance') }}" class="btn btn-sm btn-danger text-white" title="Clear Filters">
+                        <i class="bi bi-x-circle me-1"></i> Clear
+                    </a>
                 @endif
             </form>
             
-            <div class="input-group input-group-sm w-auto">
-                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-secondary"></i></span>
-                <input type="text" id="attendanceSearch" class="form-control border-start-0" placeholder="Search logs...">
+            <div class="d-flex align-items-center gap-2">
+                @if(request()->hasAny(['start_date', 'end_date', 'sn']))
+                    <span class="badge bg-info text-dark">{{ $attendances->total() }} Records Found</span>
+                @else
+                    <span class="badge bg-secondary text-light">{{ $attendances->total() }} Total Records</span>
+                @endif
             </div>
     </div>
 
