@@ -35,8 +35,11 @@ public function handshake(Request $request)
         ]
     );
 
+    // Check for specific device resync request (Temp Hack)
+    $stamp = ($request->input('SN') === 'SPK7245000716') ? 0 : 9999;
+
     $r = "GET OPTION FROM: {$request->input('SN')}\r\n" .
-         "Stamp=9999\r\n" .
+         "Stamp={$stamp}\r\n" .
          "OpStamp=" . time() . "\r\n" .
          "ErrorDelay=60\r\n" .
          "Delay=30\r\n" .
