@@ -38,13 +38,27 @@ class DeviceController extends Controller
         $data['log'] = DB::table('finger_log')->select('id','data','url')->orderBy('id','DESC')->get();
         return view('devices.log',$data);
     }
-    public function Attendance() {
-       //$attendances = Attendance::latest('timestamp')->orderBy('id','DESC')->paginate(15);
-       $attendances = DB::table('attendances')
-           ->leftJoin('devices', 'attendances.sn', '=', 'devices.no_sn')
-           ->select('attendances.*', 'devices.nama as device_name')
-           ->orderBy('attendances.id','DESC')
-           ->paginate(15);
+    public function Attendance(Request $request) {
+        $query = DB::table('attendances')
+            ->leftJoin('devices', 'attendances.sn', '=', 'devices.no_sn')
+            ->select('attendances.*', 'devices.nama as device_name');
+
+        // Filter by Date
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('attendances.timestamp', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+        } elseif ($startDate) {
+            $query->where('attendances.timestamp', '>=', $startDate . ' 00:00:00');
+        } elseif ($endDate) {
+            $query->where('attendances.timestamp', '<=', $endDate . ' 23:59:59');
+        }
+
+        $attendances = $query->orderBy('attendances.timestamp', 'DESC')
+            ->orderBy('attendances.id', 'DESC') // Secondary sort for stability
+            ->paginate(15)
+            ->withQueryString(); // Keep filters in pagination links
 
         return view('devices.attendance', compact('attendances'));
     }

@@ -16,17 +16,19 @@
 <div class="card">
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
         <h5 class="card-title mb-0">Logs Records</h5>
-        <div class="d-flex gap-2">
+            <form method="GET" action="{{ route('devices.Attendance') }}" class="d-flex gap-2">
+                <input type="date" name="start_date" class="form-control form-control-sm" value="{{ request('start_date') }}" placeholder="Start Date">
+                <input type="date" name="end_date" class="form-control form-control-sm" value="{{ request('end_date') }}" placeholder="End Date">
+                <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-filter"></i></button>
+                @if(request('start_date') || request('end_date'))
+                    <a href="{{ route('devices.Attendance') }}" class="btn btn-sm btn-secondary" title="Reset Filter"><i class="bi bi-x-lg"></i></a>
+                @endif
+            </form>
+            
             <div class="input-group input-group-sm w-auto">
                 <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-secondary"></i></span>
                 <input type="text" id="attendanceSearch" class="form-control border-start-0" placeholder="Search logs...">
             </div>
-            <select class="form-select form-select-sm w-auto" id="statusFilter">
-                <option value="">All Status</option>
-                <option value="1">Checked In</option>
-                <option value="0">Checked Out</option>
-            </select>
-        </div>
     </div>
 
     <div class="table-responsive">
