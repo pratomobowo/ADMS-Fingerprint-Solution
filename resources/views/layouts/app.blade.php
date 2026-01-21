@@ -75,10 +75,14 @@
                                     <i class="bi bi-key me-2"></i>Token Management
                                 </a>
                             </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
                                 <a class="dropdown-item {{ request()->routeIs('admin.users') ? 'active' : '' }}" href="{{ route('admin.users') }}">
                                     <i class="bi bi-people me-2"></i>User Management
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item {{ request()->routeIs('admin.logs') ? 'active' : '' }}" href="{{ route('admin.logs') }}">
+                                    <i class="bi bi-journal-text me-2"></i>System Key Logs
                                 </a>
                             </li>
                         </ul>

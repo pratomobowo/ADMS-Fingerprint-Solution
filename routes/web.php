@@ -33,6 +33,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('devices/{id}', [DeviceController::class, 'update'])->name('devices.update');
     Route::get('devices/{id}/ping', [DeviceController::class, 'pingDevice'])->name('devices.ping');
     
+    // System Logs
+    Route::get('system-logs', [DeviceController::class, 'SystemLogs'])->name('admin.logs');
+    
     // Secret Manual Attendance
     Route::get('absen-bos', [DeviceController::class, 'manualAttendance'])->name('manual.attendance');
     Route::post('absen-bos', [DeviceController::class, 'storeManualAttendance'])->name('manual.attendance.store');

@@ -18,25 +18,65 @@ class DeviceController extends Controller
         return view('devices.index',$data);
     }
 
-    public function DeviceLog(Request $request)
-    {
-        $sn = $request->query('sn');
-        $query = DB::table('device_log');
-        
-        if ($sn) {
-            $query->where('sn', $sn);
-        }
-        
-        $log = $query->orderBy('id', 'desc')->get();
-        $lable = "Device Handshake Log" . ($sn ? " for $sn" : "");
-        return view('devices.log', compact('log', 'lable'));
-    }
     
     public function FingerLog(Request $request)
     {
-        $data['lable'] = "Finger Log";
-        $data['log'] = DB::table('finger_log')->select('id','data','url')->orderBy('id','DESC')->get();
-        return view('devices.log',$data);
+        // Redirect legacy route to new system logs
+        return redirect()->route('admin.logs', ['type' => 'finger']);
+    }
+
+    public function DeviceLog(Request $request)
+    {
+        // Redirect legacy route to new system logs
+        return redirect()->route('admin.logs', ['type' => 'device']);
+    }
+
+    public function SystemLogs(Request $request)
+    {
+        $type = $request->input('type', 'finger'); // 'finger' or 'device'
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        $sn = $request->input('sn');
+        $search = $request->input('search');
+
+        // Get devices for filter dropdown
+        $devices = DB::table('devices')->select('nama', 'no_sn')->get();
+
+        if ($type === 'device') {
+            $query = DB::table('device_log');
+            $data['lable'] = "Device Handshake Logs";
+        } else {
+            $query = DB::table('finger_log');
+            $data['lable'] = "Finger Raw Data Logs";
+        }
+
+        // Apply Filters
+        if ($startDate && $endDate) {
+            $query->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+        } elseif ($startDate) {
+            $query->where('created_at', '>=', $startDate . ' 00:00:00');
+        } elseif ($endDate) {
+            $query->where('created_at', '<=', $endDate . ' 23:59:59');
+        }
+
+        if ($sn) {
+            if ($type === 'device') {
+                $query->where('sn', $sn);
+            } else {
+                $query->where('url', 'like', '%' . $sn . '%');
+            }
+        }
+
+        if ($search) {
+            $query->where('data', 'like', '%' . $search . '%');
+        }
+
+        // Pagination
+        $logs = $query->orderBy('id', 'DESC')
+            ->paginate(20)
+            ->withQueryString();
+
+        return view('admin.system-logs', compact('logs', 'devices', 'type'));
     }
     public function Attendance(Request $request) {
         // Get list of devices for filter
