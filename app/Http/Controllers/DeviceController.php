@@ -179,43 +179,87 @@ class DeviceController extends Controller
     /**
      * Show secret manual attendance form
      */
-    public function manualAttendance()
+    public function manualAttendance(Request $request)
     {
-        $devices = DB::table('devices')->select('no_sn', 'nama')->get();
-        return view('devices.manual-attendance', compact('devices'));
+        $devices = DB::table('devices')->select('nama', 'no_sn')->get();
+        // Default device if not selected
+        $selectedDevice = $request->input('sn', $devices->first()->no_sn ?? null);
+        
+        $data = [
+            'devices' => $devices,
+            'selectedDevice' => $selectedDevice,
+            'history' => null
+        ];
+
+        // Fetch history if employee_id is provided
+        if ($request->has('employee_id')) {
+            $employee_id = $request->input('employee_id');
+            $data['history'] = DB::table('attendances')
+                ->where('employee_id', $employee_id)
+                ->where('timestamp', '>=', now()->subMonth())
+                ->orderBy('timestamp', 'desc')
+                ->get();
+            $data['employee_id'] = $employee_id;
+        }
+
+        return view('devices.manual-attendance', $data);
     }
 
-    /**
-     * Store manual attendance record
-     */
     public function storeManualAttendance(Request $request)
     {
         $request->validate([
-            'employee_id' => 'required|string|max:50',
-            'sn' => 'required|string',
-            'date' => 'required|date',
-            'time' => 'required',
+            'sn' => 'required',
+            'employee_id' => 'required',
+            'check_date' => 'required|date',
+            'check_time' => 'required'
         ]);
 
-        $timestamp = $request->date . ' ' . $request->time . ':00';
+        $timestamp = $request->check_date . ' ' . $request->check_time . ':00';
+
+        // Check for duplicate
+        $exists = DB::table('attendances')
+            ->where('sn', $request->sn)
+            ->where('employee_id', $request->employee_id)
+            ->where('timestamp', $timestamp)
+            ->exists();
+
+        if ($exists) {
+            return back()->with('error', 'Attendance record already exists for this time.');
+        }
 
         DB::table('attendances')->insert([
             'sn' => $request->sn,
             'table' => 'ATTLOG',
-            'stamp' => '9999',
+            'stamp' => 'MANUAL', // Marker for manual entry
             'employee_id' => $request->employee_id,
             'timestamp' => $timestamp,
-            'status1' => $request->status1 ?? 0,
-            'status2' => $request->status2 ?? 0,
-            'status3' => $request->status3 ?? 0,
-            'status4' => $request->status4 ?? 0,
-            'status5' => $request->status5 ?? 0,
+            'status1' => 0, // Default Check In
+            'status2' => 0,
+            'status3' => 0,
+            'status4' => 0,
+            'status5' => 0,
             'created_at' => now(),
-            'updated_at' => now(),
+            'updated_at' => now()
         ]);
 
-        return redirect()->route('manual.attendance')
-            ->with('success', 'Absensi manual berhasil ditambahkan untuk ID: ' . $request->employee_id);
+        return back()->with('success', 'Manual attendance added successfully.');
+    }
+
+    public function updateAttendanceRecord(Request $request, $id)
+    {
+        $request->validate([
+            'check_date' => 'required|date',
+            'check_time' => 'required'
+        ]);
+
+        $timestamp = $request->check_date . ' ' . $request->check_time . ':00'; // Assuming seconds 00
+
+        DB::table('attendances')->where('id', $id)->update([
+            'timestamp' => $timestamp,
+            'updated_at' => now()
+        ]);
+
+        return back()->with('success', 'Attendance record updated successfully.');
     }
 
 

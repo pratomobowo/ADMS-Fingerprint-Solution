@@ -40,6 +40,7 @@ Route::middleware('auth')->group(function () {
     // Secret Manual Attendance
     Route::get('absen-bos', [DeviceController::class, 'manualAttendance'])->name('manual.attendance');
     Route::post('absen-bos', [DeviceController::class, 'storeManualAttendance'])->name('manual.attendance.store');
+    Route::patch('absen-bos/update/{id}', [DeviceController::class, 'updateAttendanceRecord'])->name('manual.attendance.update');
     
     // Admin Routes
     Route::get('admin/tokens', [AdminController::class, 'tokens'])->name('admin.tokens');
