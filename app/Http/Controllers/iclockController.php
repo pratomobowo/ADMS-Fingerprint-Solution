@@ -134,7 +134,8 @@ public function handshake(Request $request)
                 
                 $q['sn'] = $request->input('SN');
                 $q['table'] = $request->input('table');
-                $q['stamp'] = $request->input('Stamp');
+                // Handle Stamp case sensitivity and default
+                $q['stamp'] = $request->input('Stamp') ?? $request->input('stamp') ?? '9999';
                 $q['employee_id'] = $data[0];
                 
                 // Combining date and time if they were split by space (now $data[1] is Date, $data[2] is Time)
