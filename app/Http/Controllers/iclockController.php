@@ -96,6 +96,10 @@ public function handshake(Request $request)
             $arr = preg_split('/\\r\\n|\\r|,|\\n/', $request->getContent());
             //$tot = count($arr);
             $tot = 0;
+            //options
+            if($request->input('table') == "options"){
+                return "OK";
+            }
             //operation log
             if($request->input('table') == "OPERLOG"){
                 // $tot = count($arr) - 1;
